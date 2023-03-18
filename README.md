@@ -133,3 +133,12 @@ La Parte 2 requiere una sección donde se explique el protocolo de comunicación
 La Parte 3 requiere una sección que expliquen los mecanismos de sincronización utilizados.
 
 Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección provistos [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
+
+# Entrega
+
+## Ejecución de los ejercicios
+
+### Ejercicio 1
+
+Se puede ejecutar `make docker-compose-up` y luego `make docker-compose-logs`. De esta manera se visualizará en los logs el correcto funcionamiento del segundo cliente.
+
