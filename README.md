@@ -152,3 +152,7 @@ Se parte del archivo llamado `docker-compose-base.yaml` en la carpeta `compose_g
 Se puede replicar más de una sección. Cada sección debe comenzar con `# replicate-start [id]`, y al ejecutar el comando se pasa la cantidad de veces a replicar cada sección: `python3 compose_generator/generate.py [archivo_destino] [n_1] [n_2] [n_3] ...` donde `n_[x]` es la cantidad de veces a replicar la sección con `[id]`=`x`.
 
 El script funciona utilizando expresiones regulares en Python.
+
+### Ejercicio 2
+
+Para que los containers accedan a los archivos de configuración ahora se utiliza un [bind mount](https://docs.docker.com/storage/bind-mounts/). Se puede ejecutar el comando `make docker-compose-up` y al cambiar los archivos de configuración no requerirá una nueva build.
