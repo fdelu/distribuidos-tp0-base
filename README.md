@@ -156,3 +156,11 @@ El script funciona utilizando expresiones regulares en Python.
 ### Ejercicio 2
 
 Para que los containers accedan a los archivos de configuración ahora se utiliza un [bind mount](https://docs.docker.com/storage/bind-mounts/). Se puede ejecutar el comando `make docker-compose-up` y al cambiar los archivos de configuración no requerirá una nueva build.
+
+### Ejercicio 3
+
+Para realizar esta prueba, creé una nueva carpeta `test_server`. Esta carpeta contiene un `Dockerfile` para la creación de un container de ubuntu con netcat instalado, y un archivo `docker-compose.yaml` con la configuración para ejecutar el container con el script de prueba, que se encuentra en el archivo `test.sh`.
+
+Es importante que antes de ejecutar la prueba, se haya ejecutado previamente `make docker-compose-up` para tener el servidor corriendo. El nuevo contenedor para la prueba se agregará a la misma red para poder conectarse al servidor. 
+
+Para correr la prueba, ejecutar `(cd test_server; make run)`. Esto creará el container, lo ejecutará, imprimirá los resultados y limpiará los recursos utilizados.

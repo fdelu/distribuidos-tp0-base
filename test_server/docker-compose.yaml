@@ -1,0 +1,18 @@
+version: '3.9'
+name: tp0_test
+services:
+  test_server:
+    container_name: test_server
+    image: test_server:latest
+    entrypoint: /bin/bash /test.sh
+    networks:
+      - testing_net
+    volumes:
+      - type: bind
+        source: ./test.sh
+        target: /test.sh
+
+networks:
+  testing_net:
+    name: tp0_testing_net
+    external: true
