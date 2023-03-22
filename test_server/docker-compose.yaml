@@ -3,8 +3,8 @@ name: tp0_test
 services:
   test_server:
     container_name: test_server
-    image: test_server:latest
-    entrypoint: /bin/bash /test.sh
+    image: alpine:latest
+    entrypoint: /bin/sh /test.sh
     networks:
       - testing_net
     volumes:

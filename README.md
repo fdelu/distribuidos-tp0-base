@@ -159,7 +159,7 @@ Para que los containers accedan a los archivos de configuración ahora se utiliz
 
 ### Ejercicio 3
 
-Para realizar esta prueba, creé una nueva carpeta `test_server`. Esta carpeta contiene un `Dockerfile` para la creación de un container de ubuntu con netcat instalado, y un archivo `docker-compose.yaml` con la configuración para ejecutar el container con el script de prueba, que se encuentra en el archivo `test.sh`.
+Para realizar esta prueba, creé una nueva carpeta `test_server`. Esta carpeta contiene un archivo `docker-compose.yaml` con la configuración para ejecutar el container con el script de prueba, que se encuentra en el archivo `test.sh`.
 
 Es importante que antes de ejecutar la prueba, se haya ejecutado previamente `make docker-compose-up` para tener el servidor corriendo. El nuevo contenedor para la prueba se agregará a la misma red para poder conectarse al servidor. 
 
