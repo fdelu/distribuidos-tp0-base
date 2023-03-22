@@ -159,8 +159,6 @@ Para que los containers accedan a los archivos de configuración ahora se utiliz
 
 ### Ejercicio 3
 
-Para realizar esta prueba, creé una nueva carpeta `test_server`. Esta carpeta contiene un archivo `docker-compose.yaml` con la configuración para ejecutar el container con el script de prueba, que se encuentra en el archivo `test.sh`.
+Para realizar esta prueba, agregué al `docker-compose-dev.yaml` un nuevo container con la configuración para ejecutar el el script de prueba, que se encuentra en el archivo `test_server.sh`. Este solo se crea utilizando el profile `test_server`.
 
-Es importante que antes de ejecutar la prueba, se haya ejecutado previamente `make docker-compose-up` para tener el servidor corriendo. El nuevo contenedor para la prueba se agregará a la misma red para poder conectarse al servidor. 
-
-Para correr la prueba, ejecutar `(cd test_server; make run)`. Esto creará el container, lo ejecutará, imprimirá los resultados y limpiará los recursos utilizados.
+Para correr la prueba, ejecutar `make test_server`. Esto creará el container, lo ejecutará, imprimirá los resultados y limpiará los recursos utilizados.
