@@ -11,30 +11,23 @@ services:
     networks:
       - testing_net
 
-  client1:
-    container_name: client1
+# replicate-start 1
+  # ID=index
+  clientID:
+    # ID=index
+    container_name: clientID
     image: client:latest
     entrypoint: /client
     environment:
-      - CLI_ID=1
+      # N=index
+      - CLI_ID=N
       - CLI_LOG_LEVEL=DEBUG
     networks:
       - testing_net
     depends_on:
       - server
 
-  client2:
-    container_name: client2
-    image: client:latest
-    entrypoint: /client
-    environment:
-      - CLI_ID=2
-      - CLI_LOG_LEVEL=DEBUG
-    networks:
-      - testing_net
-    depends_on:
-      - server
-
+# replicate-end
 networks:
   testing_net:
     ipam:

@@ -142,3 +142,13 @@ Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los cri
 
 Se puede ejecutar `make docker-compose-up` y luego `make docker-compose-logs`. De esta manera se visualizará en los logs el correcto funcionamiento del segundo cliente.
 
+### Ejercicio 1.1
+
+Ejecutar, por ejemplo, `python3 compose_generator/generate.py docker-compose-dev.yaml 5`. Esto va a crear un docker compose sobreescribiendo el actual, con 5 clientes. 
+
+### Funcionamiento del script
+Se parte del archivo llamado `docker-compose-base.yaml` en la carpeta `compose_generator`. Todo el contenido entre los comentarios `# replicate-start 1` y `# replicate-end` se va a replicar. Los comentarios del tipo `# [variable]=index` reemplazan en la siguiente línea la variable por el índice de replicación (si se pone `# ID=index`, `clienteID` se transforma en `cliente1`, `cliente2`, `cliente3`, etc). 
+
+Se puede replicar más de una sección. Cada sección debe comenzar con `# replicate-start [id]`, y al ejecutar el comando se pasa la cantidad de veces a replicar cada sección: `python3 compose_generator/generate.py [archivo_destino] [n_1] [n_2] [n_3] ...` donde `n_[x]` es la cantidad de veces a replicar la sección con `[id]`=`x`.
+
+El script funciona utilizando expresiones regulares en Python.
