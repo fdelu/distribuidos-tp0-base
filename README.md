@@ -174,3 +174,9 @@ Para este ejercicio también resolví los TODO del código provisto que no conte
 Se modificó el código del cliente y del servidor para enviar apuestas. El protocolo de comunicación es muy sencillo: tanto cliente como servidor tienen una clase/tipo `Client` que envía o recibe mensajes, asegurandose de no hacer short-reads o short-writes. Un mensaje no es más que un string. Para enviarlos, los mensajes se codifican o decodifican en UTF-8 y se le agrega un header de 2 bytes con la cantidad de bytes del mensaje (sin incluir el header). Para enviar las apuestas, se utilizó este cliente enviando la información como un string que contiene un JSON que la representa.
 
 Se puede probar que se estan almacenando las apuestas utilizando `make docker-compuse-up` y `make docker-compose-logs`. También, con el servidor abierto, se puede ejecutar `docker exec -it $(docker ps -f name=server -q) /bin/bash` para abrir una terminal en el contenedor y utilizar `cat bets.csv` para ver el archivo con las apuestas.
+
+### Ejercicio 6
+
+A la hora de buildear las imágenes desde el Makefile, agregué un unzip de los datasets que se agregan a cada cliente como un volumen en `/bets.csv`. Los clientes leen y envian 20 apuestas del archivo por cada batch (configurable en `client/config.yaml`, aunque no se puede agrandar mucho por el límite de los 8kB).
+
+También se modificó un poco el protocolo de comunicación. Ahora se envían JSONs del tipo `{"type": "string", "payload": "any"}` donde según el string que haya en `type` se define el contenido del `payload`. Por ahora solo hay 2 tipos: `submit` (mensajes cliente->servidor donde el payload es una lista de apuestas) y `submit_result` (mensaje servidor->cliente donde el payload es un string confirmando el procesamiento de las apuestas).
