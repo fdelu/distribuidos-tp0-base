@@ -59,18 +59,20 @@ func (c *Client) Close() {
 
 // Sends a message to the server. Does nothing if closed.
 // Adds a header of 2 bytes with the message length
-func (c *Client) Send(data []byte) {
+func (c *Client) Send(message string) {
 	if c.conn == nil {
 		return
 	}
-	if len(data) > MAX_SIZE {
-		log.Fatalf("Tried to send a message of more than %d bytes (%d bytes)", MAX_SIZE, len(data))
+	bytes := []byte(message)
+
+	if len(bytes) > MAX_SIZE {
+		log.Fatalf("Tried to send a message of more than %d bytes (%d bytes)", MAX_SIZE, len(bytes))
 	}
 
-	binary.Write(c.conn, binary.BigEndian, uint16(len(data)))
+	binary.Write(c.conn, binary.BigEndian, uint16(len(bytes)))
 
-	for totalSent := 0; totalSent < len(data); {
-		sent, _ := c.conn.Write([]byte(data[totalSent:]))
+	for totalSent := 0; totalSent < len(bytes); {
+		sent, _ := c.conn.Write(bytes[totalSent:])
 		totalSent += sent
 	}
 	log.Infof("action: send_message | result: success | client_id: %v",

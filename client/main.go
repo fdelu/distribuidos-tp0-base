@@ -89,6 +89,6 @@ func main() {
 		ID:            v.GetString("id"),
 	}
 
-	agencia := common.NewAgencia(config)
-	agencia.Run()
+	agency := common.NewAgency(config)
+	agency.Run()
 }

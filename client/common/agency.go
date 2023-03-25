@@ -1,21 +1,22 @@
 package common
 
 import (
+	"encoding/json"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
-type Agencia struct {
+type Agency struct {
 	config Config
 	client *Client
 }
 
-func NewAgencia(config Config) *Agencia {
-	return &Agencia{config: config}
+func NewAgency(config Config) *Agency {
+	return &Agency{config: config}
 }
 
-func (a *Agencia) setupStop() {
+func (a *Agency) setupStop() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM)
 	go func() {
@@ -26,11 +27,12 @@ func (a *Agencia) setupStop() {
 	}()
 }
 
-func (a *Agencia) Run() {
+func (a *Agency) Run() {
 	a.setupStop()
 	a.client = NewClient(a.config)
 
-	apuesta := ApuestaFromEnv()
-	a.client.Send([]byte(apuesta.ToJson()))
+	apuesta := BetFromEnv()
+	message, _ := json.Marshal(apuesta)
+	a.client.Send(string(message))
 	a.client.Close()
 }
