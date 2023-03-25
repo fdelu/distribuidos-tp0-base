@@ -3,11 +3,8 @@ package main
 import (
 	"fmt"
 	"strings"
-	"time"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
 	"github.com/7574-sistemas-distribuidos/docker-compose-init/client/common"
@@ -32,8 +29,6 @@ func InitConfig() (*viper.Viper, error) {
 	// Add env variables supported
 	v.BindEnv("id")
 	v.BindEnv("server", "address")
-	v.BindEnv("loop", "period")
-	v.BindEnv("loop", "lapse")
 	v.BindEnv("log", "level")
 
 	// Try to read configuration from config file. If config file
@@ -43,15 +38,6 @@ func InitConfig() (*viper.Viper, error) {
 	v.SetConfigFile("./config.yaml")
 	if err := v.ReadInConfig(); err != nil {
 		fmt.Printf("Configuration could not be read from config file. Using env variables instead")
-	}
-
-	// Parse time.Duration variables and return an error if those variables cannot be parsed
-	if _, err := time.ParseDuration(v.GetString("loop.lapse")); err != nil {
-		return nil, errors.Wrapf(err, "Could not parse CLI_LOOP_LAPSE env var as time.Duration.")
-	}
-
-	if _, err := time.ParseDuration(v.GetString("loop.period")); err != nil {
-		return nil, errors.Wrapf(err, "Could not parse CLI_LOOP_PERIOD env var as time.Duration.")
 	}
 
 	return v, nil
@@ -66,11 +52,11 @@ func InitLogger(logLevel string) error {
 		return err
 	}
 
-    customFormatter := &logrus.TextFormatter{
-      TimestampFormat: "2006-01-02 15:04:05",
-      FullTimestamp: false,
-    }
-    logrus.SetFormatter(customFormatter)
+	customFormatter := &logrus.TextFormatter{
+		TimestampFormat: "2006-01-02 15:04:05",
+		FullTimestamp:   false,
+	}
+	logrus.SetFormatter(customFormatter)
 	logrus.SetLevel(level)
 	return nil
 }
@@ -78,35 +64,31 @@ func InitLogger(logLevel string) error {
 // PrintConfig Print all the configuration parameters of the program.
 // For debugging purposes only
 func PrintConfig(v *viper.Viper) {
-	logrus.Infof("action: config | result: success | client_id: %s | server_address: %s | loop_lapse: %v | loop_period: %v | log_level: %s",
-	    v.GetString("id"),
-	    v.GetString("server.address"),
-	    v.GetDuration("loop.lapse"),
-	    v.GetDuration("loop.period"),
-	    v.GetString("log.level"),
-    )
+	logrus.Infof("action: config | result: success | client_id: %s | server_address: %s | log_level: %s",
+		v.GetString("id"),
+		v.GetString("server.address"),
+		v.GetString("log.level"),
+	)
 }
 
 func main() {
 	v, err := InitConfig()
 	if err != nil {
-		log.Fatalf("%s", err)
+		logrus.Fatalf("%s", err)
 	}
 
 	if err := InitLogger(v.GetString("log.level")); err != nil {
-		log.Fatalf("%s", err)
+		logrus.Fatalf("%s", err)
 	}
 
 	// Print program config with debugging purposes
 	PrintConfig(v)
 
-	clientConfig := common.ClientConfig{
+	config := common.Config{
 		ServerAddress: v.GetString("server.address"),
 		ID:            v.GetString("id"),
-		LoopLapse:     v.GetDuration("loop.lapse"),
-		LoopPeriod:    v.GetDuration("loop.period"),
 	}
 
-	client := common.NewClient(clientConfig)
-	client.StartClientLoop()
+	agencia := common.NewAgencia(config)
+	agencia.Run()
 }
