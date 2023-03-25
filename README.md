@@ -168,3 +168,9 @@ Para correr la prueba, ejecutar `make test_server`. Esto creará el container, l
 Para terminar la ejecución de manera graceful, agregué a los loops tanto del cliente como del servidor un handler para la señal `SIGTERM`. De esta manera, cuando se envía la señal, el loop finaliza y el programa termina correctamente. El servidor también cierra el listener TCP cuando se apaga.
 
 Para este ejercicio también resolví los TODO del código provisto que no contemplaban los short-read ni short-write.
+
+### Ejercicio 5
+
+Se modificó el código del cliente y del servidor para enviar apuestas. El protocolo de comunicación es muy sencillo: tanto cliente como servidor tienen una clase/tipo `Client` que envía o recibe mensajes, asegurandose de no hacer short-reads o short-writes. Un mensaje no es más que un string. Para enviarlos, los mensajes se codifican o decodifican en UTF-8 y se le agrega un header de 2 bytes con la cantidad de bytes del mensaje (sin incluir el header). Para enviar las apuestas, se utilizó este cliente enviando la información como un string que contiene un JSON que la representa.
+
+Se puede probar que se estan almacenando las apuestas utilizando `make docker-compuse-up` y `make docker-compose-logs`. También, con el servidor abierto, se puede ejecutar `docker exec -it $(docker ps -f name=server -q) /bin/bash` para abrir una terminal en el contenedor y utilizar `cat bets.csv` para ver el archivo con las apuestas.
