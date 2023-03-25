@@ -136,7 +136,7 @@ Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los cri
 
 # Entrega
 
-## Ejecución de los ejercicios
+## Parte 1
 
 ### Ejercicio 1
 
@@ -169,6 +169,8 @@ Para terminar la ejecución de manera graceful, agregué a los loops tanto del c
 
 Para este ejercicio también resolví los TODO del código provisto que no contemplaban los short-read ni short-write.
 
+## Parte 2
+
 ### Ejercicio 5
 
 Se modificó el código del cliente y del servidor para enviar apuestas. El protocolo de comunicación es muy sencillo: tanto cliente como servidor tienen una clase/tipo `Client` que envía o recibe mensajes, asegurandose de no hacer short-reads o short-writes. Un mensaje no es más que un string. Para enviarlos, los mensajes se codifican o decodifican en UTF-8 y se le agrega un header de 2 bytes con la cantidad de bytes del mensaje (sin incluir el header). Para enviar las apuestas, se utilizó este cliente enviando la información como un string que contiene un JSON que la representa.
@@ -179,4 +181,18 @@ Se puede probar que se estan almacenando las apuestas utilizando `make docker-co
 
 A la hora de buildear las imágenes desde el Makefile, agregué un unzip de los datasets que se agregan a cada cliente como un volumen en `/bets.csv`. Los clientes leen y envian 20 apuestas del archivo por cada batch (configurable en `client/config.yaml`, aunque no se puede agrandar mucho por el límite de los 8kB).
 
-También se modificó un poco el protocolo de comunicación. Ahora se envían JSONs del tipo `{"type": "string", "payload": "any"}` donde según el string que haya en `type` se define el contenido del `payload`. Por ahora solo hay 2 tipos: `submit` (mensajes cliente->servidor donde el payload es una lista de apuestas) y `submit_result` (mensaje servidor->cliente donde el payload es un string confirmando el procesamiento de las apuestas).
+También se modificó un poco el protocolo de comunicación. Ahora se envían JSONs del tipo `{"type": "string", "payload": "any"}` donde según el string que haya en `type` se define el contenido del `payload`. Por ahora solo hay 2 tipos: `submit` (mensajes cliente->servidor donde el payload es una lista de apuestas) y `submit_result` (mensaje servidor->cliente donde el payload es un string confirmando el procesamiento de las apuestas). Para más información, ver la sección siguiente.
+
+
+### Ejercicio 7
+
+Se agregaron dos nuevos mensajes: `get_winners` y `winners`. A continuación detalles sobre el protocolo final implementado:
+
+* **Mensajes**: Se implementó una capa inferior que utiliza los sockets, que es capaz de enviar mensajes como strings. Esta capa agrega un header de 2 bytes delante del mensaje que indica el largo de este. 
+  Entre el servidor y los clientes, se utiliza esa capa para enviar mensajes codificados como un JSON con dos atributos: `type` y `payload`. Hay 4 tipos de mensajes:
+  - `submit`: El cliente envía este mensaje al servidor con una lista de apuestas a agregar. El payload de este mensaje es una lista de objetos de apuestas, cuyos atributos son la información de cada una de ellas: `agency`, `first_name`, `last_name`, `document`, `birthdate`, `number`.
+  - `submit_result`: Es la respuesta del servidor al mensaje anterior. Si el servidor proceso las respuestas exitosamente, se espera este mensaje con un `"OK"` en su payload.
+  - `get_winners`: Se envía por el cliente cuando terminó de agregar apuestas, solicitándole al servidor que responda con los ganadores. No tiene payload.
+  - `winners`: Es la respuesta del servidor al mensaje anterior. El payload de este mensaje es una lista de strings, donde cada uno de esos strings es un DNI de una apuesta ganadora de la agencia a la que se le esta enviándo el mensaje.
+* **Diagrama**: En [este enlace](https://viewer.diagrams.net/index.html?tags=%7B%7D&highlight=0000ff&edit=_blank&layers=1&nav=1&title=ProtocoloDistribuidos#R7VlBc6IwGP01HrcDBFGOldbuobuzMxz22IkmhbSROCFU7a%2FfIEEgwdY6yJYZe%2BjASwLJ9977kg9HIFhtHzhcx78YwnTkWGg7Ancjx%2FHBVP7PgV0BjIFbABEnqIDsCgjJO1agpdCMIJw2OgrGqCDrJrhkSYKXooFBztmm2e2Z0eZb1zDCBhAuITXRvwSJuECnzqTCf2ISxeWbbc8vWlaw7KxWksYQsU0NAvcjEHDGRHG12gaY5rEr41KMmx9pPUyM40ScMsDKZo9hiGYOcMKXeZoEd6%2FpD6DmJnblgjGS61e3jIuYRSyB9L5CZ5xlCcL5Uy15V%2FV5ZGwtQVuCL1iInSITZoJJKBYrqlpxgm5zauTtkrM0LaA5oVQ901yaWm3KMr7EH6xH9csXURuoAvKA2QoLvpMdOKZQkLcmyVBpJTr0Owz9w4icimMpWTuuIrVUdUly%2BQgBeYSFGlWRIi9q06igPVVfoE1N%2BA3STC0hoEQGC0vwt0Fpk7BNTAQO13Afx400bZOcZ5aIkv8WjZVvxlzg7YchLkNlNUN18MOmZicFxTUnudZxUhrh%2FGrs3P8h%2BfMV7fSjaHeqKdruV9GOoegQ8zeCGP9ecnbdbybnsRE4U9%2B1fEthmpJlM0bNgD7LPBwwKgOfDwZLhBfThcRTwdkrrrVYlu9bH6brT0VbC9q4JWgl1nG2dnyNjMKEhrY%2FNQmw%2BjWJZ3CdZosVEQbjUsyiyTGkJEpyAeS7hCRwlkueyHPOrWpYEYSKXIdT8g4X%2B0fl7K7z1ezXN56Nxnf5s2R6S4tMZxvCSFiCNRWVkLRim3y6tigAGt0T06Jei9rApSw66dyieiQtKwgGYETDP%2Fqx6VQj6o4GOncXNuL0iBGfpHkyOlQ%2FKhV17kfbbc%2BaNdHZVp%2BGLM82103z9E0T6CeYszfNcb9etc2j5TX9Fkx4XaXfSc%2BUugalNzc3I8ejeZZdyJLBi%2FKrPTiUVNxpynU9zXOekXJBi9AuVqXY1zLl6xm3qzLF7blMsc065Zpxi3v9q8q5Gdft%2B4Nj9zXMqf6dz4H8GwDZBkf6Qeds%2F%2Br79KXJNssb%2BbqnDUkSzNPh7KhtIuq%2BuBk3uSq31Zrm%2FBbNXa628ftKvq1Onc8H4FTDYNOu0rK%2BZV%2F6q7lZyA7dpXsBde5SR3OpZ7p00o1L5W31m27Bc%2FXDOLj%2FBw%3D%3D) hay un pequeño diagrama con la secuencia de mensajes entre un cliente cualquiera y el servidor.
+
