@@ -15,12 +15,22 @@ REGEX_REPLICATE = rf".*{START_TAG}\n(?P<content>(?:.|\n)*?){END_TAG}\n?"
 # Matches a variable (index_var group) to replace with the replication index within
 # a line (content group)
 REGEX_INDEX = COMMENT_REGEX.format(r"(?P<index_var>.*)[ \t]*=[ \t]*index") + \
-    r"\n(?P<content>.*)"
+    r"[ \t]*\n(?P<content>.*)"
+# Matches a variable (times_var group) to replace with the amount of times to replicate
+# an id (id group) within a line (content group)
+REGEX_TIMES = COMMENT_REGEX.format(r"(?P<times_var>.*)[ \t]*=[ \t]*times[ \t]+(?P<id>\d+)") + \
+    r"[ \t]*\n(?P<content>.*)"
 
 def replace_index(match: re.Match, index: int):
     content = match.group("content")
     index_var = match.group("index_var")
     return content.replace(index_var, f"{index}")
+
+def replace_times(match: re.Match, times: dict[int, int]):
+    content = match.group("content")
+    times_var = match.group("times_var")
+    id = match.group("id")
+    return content.replace(times_var, f"{times[int(id)]}")
 
 def replicate(match: re.Match, times: dict[int, int]):
     content = match.group("content")
@@ -48,7 +58,9 @@ def main():
     with open(BASE_FILE_PATH, "r") as f:
         base = f.read()
 
-    replicated = re.sub(REGEX_REPLICATE, lambda match: replicate(match, times_per_id), base)
+
+    times_replaced = re.sub(REGEX_TIMES, lambda match: replace_times(match, times_per_id), base)
+    replicated = re.sub(REGEX_REPLICATE, lambda match: replicate(match, times_per_id), times_replaced)
     with open(write_to, "w") as f:
         f.write(replicated)
     

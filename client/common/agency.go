@@ -99,7 +99,7 @@ func (a *Agency) getWinners() {
 		return
 	}
 	winners := ParseWinnersMessage(response)
-	log.Info("action: consulta_ganadores | result: success | cant_ganadores: %d", len(winners))
+	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %d", len(winners))
 }
 
 func (a *Agency) Run() {
