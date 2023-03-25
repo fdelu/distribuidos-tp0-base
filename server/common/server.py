@@ -3,6 +3,9 @@ import logging
 import errno
 import signal
 
+from .client import Client
+from .utils import Bet, store_bets
+
 class Server:
     BUF_SIZE = 1024
 
@@ -42,21 +45,18 @@ class Server:
         If a problem arises in the communication with the client, the
         client socket will also be closed
         """
+        client = Client(client_sock)
+        addr = client_sock.getpeername()
         try:
-            data = bytes()
-            received = client_sock.recv(1024)
-            while received:
-                data += received
-                received = client_sock.recv(1024)
-            msg = data.rstrip().decode('utf-8')
-            addr = client_sock.getpeername()
+            msg = client.recv_message()
             logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            client_sock.sendall("{}\n".format(msg).encode('utf-8'))
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
         finally:
-            client_sock.close()
+            client.close()
             logging.info(f'action: client_socket_closed | result: success | ip: {addr[0]}')
+
+        store_bets([Bet.from_json(msg)])
 
     def __accept_new_connection(self):
         """

@@ -31,8 +31,8 @@ func (a *Agency) Run() {
 	a.setupStop()
 	a.client = NewClient(a.config)
 
-	apuesta := BetFromEnv()
-	message, _ := json.Marshal(apuesta)
+	bet := BetFromEnv(a.config.ID)
+	message, _ := json.Marshal(bet)
 	a.client.Send(string(message))
 	a.client.Close()
 }

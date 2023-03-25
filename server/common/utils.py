@@ -1,6 +1,6 @@
 import csv
 import datetime
-import time
+import json
 
 
 """ Bets storage location. """
@@ -23,6 +23,18 @@ class Bet:
         self.document = document
         self.birthdate = datetime.date.fromisoformat(birthdate)
         self.number = int(number)
+
+    def from_json(message: str):
+        data = json.loads(message)
+        return Bet(
+            data["agency"],
+            data["name"],
+            data["surname"],
+            data["dni"],
+            data["birthday"],
+            data["number"],
+        )
+
 
 """ Checks whether a bet won the prize or not. """
 def has_won(bet: Bet) -> bool:

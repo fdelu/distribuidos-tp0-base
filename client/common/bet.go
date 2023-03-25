@@ -2,35 +2,35 @@ package common
 
 import (
 	"os"
-	"strconv"
 )
 
 type Bet struct {
-	Number   int    `json:"numero"`
-	Dni      int    `json:"dni"`
-	Name     string `json:"nombre"`
-	Surname  string `json:"apellido"`
-	Birthday string `json:"nacimiento"`
+	Number   string `json:"number"`
+	Dni      string `json:"dni"`
+	Name     string `json:"name"`
+	Surname  string `json:"surname"`
+	Birthday string `json:"birthday"`
+	Agency   string `json:"agency"`
 }
 
-func NewBet(number, dni int, name, surname, birthday string) *Bet {
+func NewBet(number, dni, name, surname, birthday, agency string) *Bet {
 	return &Bet{
 		number,
 		dni,
 		name,
 		surname,
 		birthday,
+		agency,
 	}
 }
 
-func BetFromEnv() *Bet {
-	number, _ := strconv.Atoi(os.Getenv("NUMERO"))
-	dni, _ := strconv.Atoi(os.Getenv("DOCUMENTO"))
+func BetFromEnv(agency string) *Bet {
 	return &Bet{
-		Number:   number,
-		Dni:      dni,
-		Name:     os.Getenv("NOMBRE"),
-		Surname:  os.Getenv("APELLIDO"),
-		Birthday: os.Getenv("NACIMIENTO"),
+		os.Getenv("NUMERO"),
+		os.Getenv("DOCUMENTO"),
+		os.Getenv("NOMBRE"),
+		os.Getenv("APELLIDO"),
+		os.Getenv("NACIMIENTO"),
+		agency,
 	}
 }

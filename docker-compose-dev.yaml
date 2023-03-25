@@ -22,6 +22,11 @@ services:
     environment:
       - CLI_ID=1
       - CLI_LOG_LEVEL=DEBUG
+      - DOCUMENTO=20000000
+      - NUMERO=100 
+      - NOMBRE=MARIA 
+      - APELLIDO=GONZALES 
+      - NACIMIENTO=1990-12-12
     networks:
       - testing_net
     depends_on:
@@ -38,6 +43,11 @@ services:
     environment:
       - CLI_ID=2
       - CLI_LOG_LEVEL=DEBUG
+      - DOCUMENTO=35000000
+      - NUMERO=123 
+      - NOMBRE=JUAN 
+      - APELLIDO=LOPEZ 
+      - NACIMIENTO=2000-01-01
     networks:
       - testing_net
     depends_on:
