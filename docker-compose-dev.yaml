@@ -7,7 +7,7 @@ services:
     entrypoint: python3 /main.py
     environment:
       - PYTHONUNBUFFERED=1
-      - LOGGING_LEVEL=DEBUG
+      - LOGGING_LEVEL=INFO
     networks:
       - testing_net
     volumes:
@@ -21,12 +21,7 @@ services:
     entrypoint: /client
     environment:
       - CLI_ID=1
-      - CLI_LOG_LEVEL=DEBUG
-      - DOCUMENTO=20000000
-      - NUMERO=100 
-      - NOMBRE=MARIA 
-      - APELLIDO=GONZALES 
-      - NACIMIENTO=1990-12-12
+      - CLI_LOG_LEVEL=INFO
     networks:
       - testing_net
     depends_on:
@@ -35,6 +30,9 @@ services:
       - type: bind
         source: ./client/config.yaml
         target: /config.yaml
+      - type: bind
+        source: ./client/datasets/agency-1.csv
+        target: /bets.csv
 
   client2:
     container_name: client2
@@ -42,12 +40,7 @@ services:
     entrypoint: /client
     environment:
       - CLI_ID=2
-      - CLI_LOG_LEVEL=DEBUG
-      - DOCUMENTO=35000000
-      - NUMERO=123 
-      - NOMBRE=JUAN 
-      - APELLIDO=LOPEZ 
-      - NACIMIENTO=2000-01-01
+      - CLI_LOG_LEVEL=INFO
     networks:
       - testing_net
     depends_on:
@@ -56,6 +49,66 @@ services:
       - type: bind
         source: ./client/config.yaml
         target: /config.yaml
+      - type: bind
+        source: ./client/datasets/agency-2.csv
+        target: /bets.csv
+
+  client3:
+    container_name: client3
+    image: client:latest
+    entrypoint: /client
+    environment:
+      - CLI_ID=3
+      - CLI_LOG_LEVEL=INFO
+    networks:
+      - testing_net
+    depends_on:
+      - server
+    volumes:
+      - type: bind
+        source: ./client/config.yaml
+        target: /config.yaml
+      - type: bind
+        source: ./client/datasets/agency-3.csv
+        target: /bets.csv
+
+  client4:
+    container_name: client4
+    image: client:latest
+    entrypoint: /client
+    environment:
+      - CLI_ID=4
+      - CLI_LOG_LEVEL=INFO
+    networks:
+      - testing_net
+    depends_on:
+      - server
+    volumes:
+      - type: bind
+        source: ./client/config.yaml
+        target: /config.yaml
+      - type: bind
+        source: ./client/datasets/agency-4.csv
+        target: /bets.csv
+
+  client5:
+    container_name: client5
+    image: client:latest
+    entrypoint: /client
+    environment:
+      - CLI_ID=5
+      - CLI_LOG_LEVEL=INFO
+    networks:
+      - testing_net
+    depends_on:
+      - server
+    volumes:
+      - type: bind
+        source: ./client/config.yaml
+        target: /config.yaml
+      - type: bind
+        source: ./client/datasets/agency-5.csv
+        target: /bets.csv
 
   test_server:
     profiles: ["test_server"]

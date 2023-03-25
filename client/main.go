@@ -61,16 +61,6 @@ func InitLogger(logLevel string) error {
 	return nil
 }
 
-// PrintConfig Print all the configuration parameters of the program.
-// For debugging purposes only
-func PrintConfig(v *viper.Viper) {
-	logrus.Infof("action: config | result: success | client_id: %s | server_address: %s | log_level: %s",
-		v.GetString("id"),
-		v.GetString("server.address"),
-		v.GetString("log.level"),
-	)
-}
-
 func main() {
 	v, err := InitConfig()
 	if err != nil {
@@ -81,13 +71,14 @@ func main() {
 		logrus.Fatalf("%s", err)
 	}
 
-	// Print program config with debugging purposes
-	PrintConfig(v)
-
 	config := common.Config{
 		ServerAddress: v.GetString("server.address"),
 		ID:            v.GetString("id"),
+		BatchSize:     v.GetInt("bets.batch-size"),
+		BetsFilePath:  v.GetString("bets.file"),
 	}
+	// Print program config with debugging purposes
+	config.Print()
 
 	agency := common.NewAgency(config)
 	agency.Run()

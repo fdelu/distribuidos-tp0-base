@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/binary"
+	"io"
 	"net"
 	"sync/atomic"
 
@@ -45,6 +46,10 @@ func (c *Client) createClientSocket() {
 			err,
 		)
 	}
+	log.Infof(
+		"action: connect | result: success | client_id: %v",
+		c.config.ID,
+	)
 	c.conn = conn
 }
 
@@ -58,9 +63,6 @@ func (c *Client) Close() {
 
 	c.conn.Close()
 	c.conn = nil
-	log.Infof("action: disconnect | result: success | client_id: %v",
-		c.config.ID,
-	)
 }
 
 // Sends a message to the server. Does nothing if closed.
@@ -87,6 +89,28 @@ func (c *Client) Send(message string) {
 		}
 		totalSent += sent
 	}
-	log.Infof("action: send_message | result: success | client_id: %v",
+	log.Trace("action: send_message | result: success | client_id: %v",
 		c.config.ID)
+}
+
+// Receives a message to the server. Returns an empty string if closed
+func (c *Client) Receive() string {
+	if c.conn == nil {
+		return ""
+	}
+
+	sizeBuf := make([]byte, 2)
+	_, err := io.ReadFull(c.conn, sizeBuf)
+	if err != nil {
+		log.Fatalf("Failed to read from socket: %s", err)
+	}
+	size := binary.BigEndian.Uint16(sizeBuf)
+	msgBuf := make([]byte, size)
+	_, err = io.ReadFull(c.conn, msgBuf)
+	if err != nil {
+		log.Fatalf("Failed to read from socket: %s", err)
+	}
+	log.Tracef("Reading message of size %d: %s", size, string(msgBuf))
+
+	return string(msgBuf)
 }

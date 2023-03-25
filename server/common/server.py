@@ -3,6 +3,7 @@ import logging
 import errno
 import signal
 
+from .handler import ClientHandler
 from .client import Client
 from .utils import Bet, store_bets
 
@@ -36,30 +37,8 @@ class Server:
             client_sock = self.__accept_new_connection()
             if not client_sock:
                 break
-            self.__handle_client_connection(client_sock)
+            ClientHandler(client_sock).handle()
 
-    def __handle_client_connection(self, client_sock: socket.socket):
-        """
-        Read message from a specific client socket and closes the socket
-
-        If a problem arises in the communication with the client, the
-        client socket will also be closed
-        """
-        client = Client(client_sock)
-        addr = client_sock.getpeername()
-        try:
-            msg = client.recv_message()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-        except OSError as e:
-            logging.error("action: receive_message | result: fail | error: {e}")
-            return
-        finally:
-            client.close()
-            logging.info(f'action: client_socket_closed | result: success | ip: {addr[0]}')
-
-        bet = Bet.from_json(msg)
-        store_bets([bet])
-        logging.info(f"action: apuesta_almacenada | result: success | dni: ${bet.document} | numero: ${bet.number}")
 
     def __accept_new_connection(self):
         """

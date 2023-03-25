@@ -6,3 +6,6 @@ loop:
   period: "5s"
 log:
   level: "info"
+bets:
+  batch-size: 20
+  file: "/bets.csv"

@@ -24,8 +24,7 @@ class Bet:
         self.birthdate = datetime.date.fromisoformat(birthdate)
         self.number = int(number)
 
-    def from_json(message: str):
-        data = json.loads(message)
+    def from_dict(data: dict):
         return Bet(
             data["agency"],
             data["name"],
@@ -34,6 +33,9 @@ class Bet:
             data["birthday"],
             data["number"],
         )
+    
+    def to_dict(self):
+        return vars(self)
 
 
 """ Checks whether a bet won the prize or not. """
