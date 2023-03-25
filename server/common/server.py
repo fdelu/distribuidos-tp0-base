@@ -52,11 +52,14 @@ class Server:
             logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
+            return
         finally:
             client.close()
             logging.info(f'action: client_socket_closed | result: success | ip: {addr[0]}')
 
-        store_bets([Bet.from_json(msg)])
+        bet = Bet.from_json(msg)
+        store_bets([bet])
+        logging.info(f"action: apuesta_almacenada | result: success | dni: ${bet.document} | numero: ${bet.number}")
 
     def __accept_new_connection(self):
         """

@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Agency struct {
@@ -34,5 +36,6 @@ func (a *Agency) Run() {
 	bet := BetFromEnv(a.config.ID)
 	message, _ := json.Marshal(bet)
 	a.client.Send(string(message))
+	log.Infof("action: apuesta_enviada | result: success | dni: %s | numero: %s", bet.Dni, bet.Number)
 	a.client.Close()
 }
