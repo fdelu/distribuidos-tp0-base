@@ -87,7 +87,7 @@ loop:
 			msgID,
 		))
 		for totalSent := 0; totalSent < len(toSend); {
-			sent, _ := c.conn.Write([]byte(toSend))
+			sent, _ := c.conn.Write([]byte(toSend[totalSent:]))
 			totalSent += sent
 		}
 		c.conn.CloseWrite()
