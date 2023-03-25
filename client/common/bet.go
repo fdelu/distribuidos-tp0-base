@@ -4,9 +4,11 @@ import (
 	"os"
 )
 
+type Dni = string
+
 type Bet struct {
 	Number   string `json:"number"`
-	Dni      string `json:"dni"`
+	Dni      Dni    `json:"dni"`
 	Name     string `json:"name"`
 	Surname  string `json:"surname"`
 	Birthday string `json:"birthday"`

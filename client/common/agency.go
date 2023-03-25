@@ -71,15 +71,7 @@ func (a *Agency) readBatch() []Bet {
 	return bets
 }
 
-func (a *Agency) Run() {
-	a.setupStop()
-	a.client = NewClient(a.config)
-	bets, err := os.Open(a.config.BetsFilePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	a.betsFile = bets
-
+func (a *Agency) sendBets() {
 	total_sent := 0
 	for bets := a.readBatch(); len(bets) > 0; bets = a.readBatch() {
 		message, _ := json.Marshal(SubmitBetsMessage(bets))
@@ -96,5 +88,29 @@ func (a *Agency) Run() {
 		total_sent,
 		a.config.ID,
 	)
+}
+
+func (a *Agency) getWinners() {
+	message, _ := json.Marshal(GetWinnersMessage())
+	a.client.Send(string(message))
+
+	response := a.client.Receive()
+	if response == "" {
+		return
+	}
+	winners := ParseWinnersMessage(response)
+	log.Info("action: consulta_ganadores | result: success | cant_ganadores: %d", len(winners))
+}
+
+func (a *Agency) Run() {
+	a.setupStop()
+	a.client = NewClient(a.config)
+	bets, err := os.Open(a.config.BetsFilePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	a.betsFile = bets
+	a.sendBets()
+	a.getWinners()
 	a.stop()
 }
