@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"sync/atomic"
 	"syscall"
 
 	log "github.com/sirupsen/logrus"
@@ -16,17 +17,25 @@ type Agency struct {
 	client     *Client
 	betsFile   *os.File
 	betsReader *csv.Reader
+	stopped    atomic.Bool
 }
 
 func NewAgency(config Config) *Agency {
-	return &Agency{config: config}
+	var stopped atomic.Bool
+	stopped.Store(false)
+	return &Agency{config: config, stopped: stopped}
 }
 
 func (a *Agency) stop() {
-	a.client.Close()
-	if a.betsFile != nil {
-		a.betsFile.Close()
+	wasStopped := a.stopped.Swap(true)
+	if wasStopped {
+		return
 	}
+	a.client.Close()
+	a.betsFile.Close()
+	log.Infof("action: disconnected | client_id: %v",
+		a.config.ID,
+	)
 }
 
 func (a *Agency) setupStop() {
@@ -40,10 +49,10 @@ func (a *Agency) setupStop() {
 
 func (a *Agency) readBatch() []Bet {
 	bets := []Bet{}
+	if a.stopped.Load() {
+		return bets
+	}
 	if a.betsReader == nil {
-		if a.betsFile == nil {
-			return bets
-		}
 		a.betsReader = csv.NewReader(a.betsFile)
 	}
 
@@ -75,12 +84,15 @@ func (a *Agency) Run() {
 	for bets := a.readBatch(); len(bets) > 0; bets = a.readBatch() {
 		message, _ := json.Marshal(SubmitBetsMessage(bets))
 		a.client.Send(string(message))
-		response := ParseResultMessage(a.client.Receive())
-		log.Debugf("action: sent_bets | result: %s | amount: %d", response, len(bets))
+		response := a.client.Receive()
+		if response == "" {
+			break
+		}
+		result := ParseResultMessage(response)
+		log.Debugf("action: submit_bets | result: %s | amount: %d", result, len(bets))
 		total_sent += len(bets)
 	}
-
-	log.Infof("action: disconnect | submitted: %d | result: success | client_id: %v",
+	log.Infof("action: completed_submit_bets | total_submitted: %d | result: success | client_id: %v",
 		total_sent,
 		a.config.ID,
 	)

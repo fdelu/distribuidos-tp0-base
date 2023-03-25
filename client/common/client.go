@@ -4,16 +4,14 @@ import (
 	"encoding/binary"
 	"io"
 	"net"
-	"sync/atomic"
 
 	log "github.com/sirupsen/logrus"
 )
 
 // Client Entity that encapsulates how
 type Client struct {
-	config  Config
-	conn    *net.TCPConn
-	stopped atomic.Bool
+	config Config
+	conn   *net.TCPConn
 }
 
 const MAX_SIZE = 8000 // Max message size
@@ -23,11 +21,8 @@ const LEN_BYTES = 2   // How many bytes to use for the len of the message
 // NewClient Initializes a new client receiving the configuration
 // as a parameter
 func NewClient(config Config) *Client {
-	var stopped atomic.Bool
-	stopped.Store(false)
 	client := &Client{
-		config:  config,
-		stopped: stopped,
+		config: config,
 	}
 	client.createClientSocket()
 	return client
@@ -56,21 +51,12 @@ func (c *Client) createClientSocket() {
 // Closes the internal socket. Calling this method more than once
 // will do nothing.
 func (c *Client) Close() {
-	wasStopped := c.stopped.Swap(true)
-	if wasStopped {
-		return
-	}
-
 	c.conn.Close()
-	c.conn = nil
 }
 
 // Sends a message to the server. Does nothing if closed.
 // Adds a header of 2 bytes with the message length
 func (c *Client) Send(message string) {
-	if c.stopped.Load() {
-		return
-	}
 	bytes := []byte(message)
 
 	if len(bytes) > MAX_SIZE {
@@ -95,20 +81,18 @@ func (c *Client) Send(message string) {
 
 // Receives a message to the server. Returns an empty string if closed
 func (c *Client) Receive() string {
-	if c.conn == nil {
-		return ""
-	}
-
 	sizeBuf := make([]byte, 2)
 	_, err := io.ReadFull(c.conn, sizeBuf)
 	if err != nil {
-		log.Fatalf("Failed to read from socket: %s", err)
+		log.Errorf("Failed to read from socket: %s", err)
+		return ""
 	}
 	size := binary.BigEndian.Uint16(sizeBuf)
 	msgBuf := make([]byte, size)
 	_, err = io.ReadFull(c.conn, msgBuf)
 	if err != nil {
-		log.Fatalf("Failed to read from socket: %s", err)
+		log.Errorf("Failed to read from socket: %s", err)
+		return ""
 	}
 	log.Tracef("Reading message of size %d: %s", size, string(msgBuf))
 
