@@ -3,14 +3,16 @@ package common
 import (
 	"encoding/binary"
 	"net"
+	"sync/atomic"
 
 	log "github.com/sirupsen/logrus"
 )
 
 // Client Entity that encapsulates how
 type Client struct {
-	config Config
-	conn   *net.TCPConn
+	config  Config
+	conn    *net.TCPConn
+	stopped atomic.Bool
 }
 
 const MAX_SIZE = 8000 // Max message size
@@ -20,8 +22,11 @@ const LEN_BYTES = 2   // How many bytes to use for the len of the message
 // NewClient Initializes a new client receiving the configuration
 // as a parameter
 func NewClient(config Config) *Client {
+	var stopped atomic.Bool
+	stopped.Store(false)
 	client := &Client{
-		config: config,
+		config:  config,
+		stopped: stopped,
 	}
 	client.createClientSocket()
 	return client
@@ -46,7 +51,8 @@ func (c *Client) createClientSocket() {
 // Closes the internal socket. Calling this method more than once
 // will do nothing.
 func (c *Client) Close() {
-	if c.conn == nil {
+	wasStopped := c.stopped.Swap(true)
+	if wasStopped {
 		return
 	}
 
@@ -60,7 +66,7 @@ func (c *Client) Close() {
 // Sends a message to the server. Does nothing if closed.
 // Adds a header of 2 bytes with the message length
 func (c *Client) Send(message string) {
-	if c.conn == nil {
+	if c.stopped.Load() {
 		return
 	}
 	bytes := []byte(message)
@@ -72,7 +78,13 @@ func (c *Client) Send(message string) {
 	binary.Write(c.conn, binary.BigEndian, uint16(len(bytes)))
 
 	for totalSent := 0; totalSent < len(bytes); {
-		sent, _ := c.conn.Write(bytes[totalSent:])
+		sent, e := c.conn.Write(bytes[totalSent:])
+		if e != nil {
+			log.Error("action: send_message | result: failed | client_id: %v | error: %s",
+				c.config.ID,
+				e)
+			return
+		}
 		totalSent += sent
 	}
 	log.Infof("action: send_message | result: success | client_id: %v",
