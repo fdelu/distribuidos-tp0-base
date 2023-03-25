@@ -162,3 +162,9 @@ Para que los containers accedan a los archivos de configuración ahora se utiliz
 Para realizar esta prueba, agregué al `docker-compose-dev.yaml` un nuevo container con la configuración para ejecutar el el script de prueba, que se encuentra en el archivo `test_server.sh`. Este solo se crea utilizando el profile `test_server`.
 
 Para correr la prueba, ejecutar `make test_server`. Esto creará el container, lo ejecutará, imprimirá los resultados y limpiará los recursos utilizados.
+
+### Ejercicio 4
+
+Para terminar la ejecución de manera graceful, agregué a los loops tanto del cliente como del servidor un handler para la señal `SIGTERM`. De esta manera, cuando se envía la señal, el loop finaliza y el programa termina correctamente. El servidor también cierra el listener TCP cuando se apaga.
+
+Para este ejercicio también resolví los TODO del código provisto que no contemplaban los short-read ni short-write.
