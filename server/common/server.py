@@ -4,6 +4,8 @@ import errno
 import signal
 
 class Server:
+    BUF_SIZE = 1024
+
     def __init__(self, port, listen_backlog):
         # Initialize server socket
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
