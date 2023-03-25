@@ -86,9 +86,9 @@ loop:
 			c.config.ID,
 			msgID,
 		))
-		for total_sent := 0; total_sent < len(toSend); {
+		for totalSent := 0; totalSent < len(toSend); {
 			sent, _ := c.conn.Write([]byte(toSend))
-			total_sent += sent
+			totalSent += sent
 		}
 		c.conn.CloseWrite()
 
