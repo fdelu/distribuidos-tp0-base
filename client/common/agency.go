@@ -32,10 +32,10 @@ func (a *Agency) stop() {
 		return
 	}
 	a.client.Close()
-	a.betsFile.Close()
 	log.Infof("action: disconnected | client_id: %v",
 		a.config.ID,
 	)
+	a.betsFile.Close()
 }
 
 func (a *Agency) setupStop() {
@@ -73,19 +73,22 @@ func (a *Agency) readBatch() []Bet {
 
 func (a *Agency) sendBets() {
 	total_sent := 0
+	result := "success"
 	for bets := a.readBatch(); len(bets) > 0; bets = a.readBatch() {
 		message, _ := json.Marshal(SubmitBetsMessage(bets))
 		a.client.Send(string(message))
 		response := a.client.Receive()
 		if response == "" {
+			result = "failed"
 			break
 		}
 		result := ParseResultMessage(response)
 		log.Debugf("action: submit_bets | result: %s | amount: %d", result, len(bets))
 		total_sent += len(bets)
 	}
-	log.Infof("action: completed_submit_bets | total_submitted: %d | result: success | client_id: %v",
+	log.Infof("action: completed_submit_bets | total_submitted: %d | result: %s | client_id: %v",
 		total_sent,
+		result,
 		a.config.ID,
 	)
 }
@@ -110,6 +113,7 @@ func (a *Agency) Run() {
 		log.Fatal(err)
 	}
 	a.betsFile = bets
+
 	a.sendBets()
 	a.getWinners()
 	a.stop()
