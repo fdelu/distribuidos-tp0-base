@@ -196,3 +196,18 @@ Se agregaron dos nuevos mensajes: `get_winners` y `winners`. A continuación det
   - `winners`: Es la respuesta del servidor al mensaje anterior. El payload de este mensaje es una lista de strings, donde cada uno de esos strings es un DNI de una apuesta ganadora de la agencia a la que se le esta enviándo el mensaje.
 * **Diagrama**: En [este enlace](https://viewer.diagrams.net/index.html?tags=%7B%7D&highlight=0000ff&edit=_blank&layers=1&nav=1&title=ProtocoloDistribuidos#R7VlBc6IwGP01HrcDBFGOldbuobuzMxz22IkmhbSROCFU7a%2FfIEEgwdY6yJYZe%2BjASwLJ9977kg9HIFhtHzhcx78YwnTkWGg7Ancjx%2FHBVP7PgV0BjIFbABEnqIDsCgjJO1agpdCMIJw2OgrGqCDrJrhkSYKXooFBztmm2e2Z0eZb1zDCBhAuITXRvwSJuECnzqTCf2ISxeWbbc8vWlaw7KxWksYQsU0NAvcjEHDGRHG12gaY5rEr41KMmx9pPUyM40ScMsDKZo9hiGYOcMKXeZoEd6%2FpD6DmJnblgjGS61e3jIuYRSyB9L5CZ5xlCcL5Uy15V%2FV5ZGwtQVuCL1iInSITZoJJKBYrqlpxgm5zauTtkrM0LaA5oVQ901yaWm3KMr7EH6xH9csXURuoAvKA2QoLvpMdOKZQkLcmyVBpJTr0Owz9w4icimMpWTuuIrVUdUly%2BQgBeYSFGlWRIi9q06igPVVfoE1N%2BA3STC0hoEQGC0vwt0Fpk7BNTAQO13Afx400bZOcZ5aIkv8WjZVvxlzg7YchLkNlNUN18MOmZicFxTUnudZxUhrh%2FGrs3P8h%2BfMV7fSjaHeqKdruV9GOoegQ8zeCGP9ecnbdbybnsRE4U9%2B1fEthmpJlM0bNgD7LPBwwKgOfDwZLhBfThcRTwdkrrrVYlu9bH6brT0VbC9q4JWgl1nG2dnyNjMKEhrY%2FNQmw%2BjWJZ3CdZosVEQbjUsyiyTGkJEpyAeS7hCRwlkueyHPOrWpYEYSKXIdT8g4X%2B0fl7K7z1ezXN56Nxnf5s2R6S4tMZxvCSFiCNRWVkLRim3y6tigAGt0T06Jei9rApSw66dyieiQtKwgGYETDP%2Fqx6VQj6o4GOncXNuL0iBGfpHkyOlQ%2FKhV17kfbbc%2BaNdHZVp%2BGLM82103z9E0T6CeYszfNcb9etc2j5TX9Fkx4XaXfSc%2BUugalNzc3I8ejeZZdyJLBi%2FKrPTiUVNxpynU9zXOekXJBi9AuVqXY1zLl6xm3qzLF7blMsc065Zpxi3v9q8q5Gdft%2B4Nj9zXMqf6dz4H8GwDZBkf6Qeds%2F%2Br79KXJNssb%2BbqnDUkSzNPh7KhtIuq%2BuBk3uSq31Zrm%2FBbNXa628ftKvq1Onc8H4FTDYNOu0rK%2BZV%2F6q7lZyA7dpXsBde5SR3OpZ7p00o1L5W31m27Bc%2FXDOLj%2FBw%3D%3D) hay un pequeño diagrama con la secuencia de mensajes entre un cliente cualquiera y el servidor.
 
+## Parte 2
+
+### Ejercicio 8
+
+Se agregó el procesamiento en paralelo de los clientes por medio de pools the procesos. Hay 2 fases principales, cada una con su pool:
+
+1. **Obtención de las apuestas**: a medida que se van obteniendo conexiones por el listener, se agrega una tarea a la pool que recibe todas las apuestas y las guarda.
+2. **Envío de ganadores**: una vez se obtuvieron todas las apuestas, se obtienen los ganadores desde el proceso principal. Luego, se agrega una tarea a la pool para cada cliente donde este filtra las tareas que son de su agencia y se las envía al cliente.
+
+La arquitectura utilizada se asemeja bastante al modelo fork-join, ya que para ambas partes se ejecutan en paralelo tareas (casi) independientes y luego se juntan los resultados.
+
+### Mecanismos de sincronización
+Como las tareas en la pool de procesos son casi independientes, los mecanismos de sincronización son casi nulos. Hay un lock global para el archivo de apuestas que se obtiene al ejecutar la función. `store_bets` desde cada proceso. Para el `load_bets` es innecesario ya que se lee solo del proceso principal.
+
+La única información que se envía entre los procesos es la que se envía inicialmente al crear la tarea en la pool o la que se retorna al finalizar, además de la almacenada con las funciones provistas.
