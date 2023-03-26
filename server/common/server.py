@@ -1,3 +1,6 @@
+from concurrent.futures import Future, ProcessPoolExecutor, as_completed
+from multiprocessing import Manager, Queue, get_context
+from multiprocessing.managers import ListProxy
 import socket
 import logging
 import errno
@@ -17,7 +20,8 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(("", port))
         self._server_socket.listen(listen_backlog)
-        self._agencies: dict[int, ClientHandler] = {}
+
+        self.handlers: dict[any, ClientHandler] = {}
         self.num_agencies = num_agencies
         signal.signal(signal.SIGTERM, lambda *_: self.stop())
 
@@ -30,6 +34,56 @@ class Server:
         logging.info(f"action: server_socket_closed | result: success")
         os._exit(0)
 
+    def __wait_for_futures(futures: list[Future], action: str, *outputs: list[str]) -> list:
+        results = []
+        for f in as_completed(futures):
+            try:
+                logging.info(
+                    f"action: {action} | result: success | "
+                    + " | ".join(f"{x}: {y}" for x,y in zip(outputs, f.result()))
+                )
+                results.append(f.result())
+            except Exception as e:
+                logging.info(
+                    f"action: {action} | result: error | "
+                    f"error: {e}"
+                )
+        return results
+
+    def get_bets(self):
+        futures: list[Future] = []
+        max_workers = min(os.cpu_count(), self.num_agencies)
+
+        ctx = get_context("fork")
+        with ProcessPoolExecutor(max_workers, mp_context=ctx) as e:
+            while len(futures) < self.num_agencies:
+                client_sock = self.__accept_new_connection()
+                if not client_sock:
+                    break
+
+                handler = ClientHandler(client_sock)
+                self.handlers[handler.addr] = handler
+                futures.append(e.submit(worker_get_bets, handler))
+            
+            results = Server.__wait_for_futures(futures, "get_bets", "agency", "address", "submitted_bets")
+            for agency, address, _ in results:
+                self.handlers[address].agency = agency
+
+        logging.info(f"action: sorteo | result: success")
+        self._server_socket.close()
+
+    def send_winners(self):
+        max_workers = min(os.cpu_count(), self.num_agencies)
+        futures: list[Bet] = []
+        ctx = get_context("fork")
+        winners = [x for x in load_bets() if has_won(x)]
+        with ProcessPoolExecutor(max_workers, mp_context=ctx) as e:
+            
+            for handler in self.handlers.values():
+                futures.append(e.submit(worker_send_winners, handler, winners))
+
+            Server.__wait_for_futures(futures, "send_winners", "agency", "agency_winners")
+
     def run(self):
         """
         Dummy Server loop
@@ -38,35 +92,11 @@ class Server:
         communication with a client. After client with communucation
         finishes, servers starts to accept new connections again
         """
-        expected_agencies = set(range(1, self.num_agencies + 1))
-
-        while True:
-            client_sock = self.__accept_new_connection()
-            if not client_sock:
-                break
-            handler = ClientHandler(client_sock)
-            handler.get_bets()
-            self._agencies[handler.agency] = handler
-
-            remaining_agencies = expected_agencies.difference(set(self._agencies))
-            logging.info(
-                "action: process_agency | result: success | "
-                f"agency: {handler.agency} | remaining: {remaining_agencies}"
-            )
-            if len(remaining_agencies) == 0:
-                break
-
-        logging.info(f"action: sorteo | result: success")
-        self._server_socket.close()
-        logging.info(f"action: server_socket_closed | result: success")
-        self.__send_winners()
-
-    def __send_winners(self):
-        winners = [bet for bet in load_bets() if has_won(bet)]
-        for agency in list(self._agencies):
-            handler = self._agencies.pop(agency)
-            handler.send_winners(winners)
+        self.get_bets()
+        self.send_winners()
+        for handler in self.handlers.values():
             handler.close()
+
 
     def __accept_new_connection(self):
         """
@@ -91,3 +121,11 @@ class Server:
             raise
         logging.info(f"action: accept_connections | result: success | ip: {addr[0]}")
         return c
+
+def worker_get_bets(client: ClientHandler):
+    total_submitted = client.get_bets()
+    return client.agency, client.addr, total_submitted
+
+def worker_send_winners(client: ClientHandler, all_winners: list[Bet]):
+    this_agency_winners = client.send_winners(all_winners)
+    return client.agency, this_agency_winners

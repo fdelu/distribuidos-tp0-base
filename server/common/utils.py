@@ -27,15 +27,15 @@ class Bet:
     def from_dict(data: dict):
         return Bet(
             data["agency"],
-            data["name"],
-            data["surname"],
-            data["dni"],
-            data["birthday"],
+            data["first_name"],
+            data["last_name"],
+            data["document"],
+            data["birthdate"],
             data["number"],
         )
     
     def to_dict(self):
-        return vars(self)
+        return {x:str(y) for x, y in vars(self).items()}
 
 
 """ Checks whether a bet won the prize or not. """

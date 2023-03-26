@@ -8,10 +8,10 @@ type Dni = string
 
 type Bet struct {
 	Number   string `json:"number"`
-	Dni      Dni    `json:"dni"`
-	Name     string `json:"name"`
-	Surname  string `json:"surname"`
-	Birthday string `json:"birthday"`
+	Dni      Dni    `json:"document"`
+	Name     string `json:"first_name"`
+	Surname  string `json:"last_name"`
+	Birthday string `json:"birthdate"`
 	Agency   string `json:"agency"`
 }
 
