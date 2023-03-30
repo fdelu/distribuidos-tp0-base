@@ -63,7 +63,13 @@ func (c *Client) Send(message string) {
 		log.Fatalf("Tried to send a message of more than %d bytes (%d bytes)", MAX_SIZE, len(bytes))
 	}
 
-	binary.Write(c.conn, binary.BigEndian, uint16(len(bytes)))
+	e := binary.Write(c.conn, binary.BigEndian, uint16(len(bytes)))
+	if e != nil {
+		log.Error("action: send_message | result: failed | client_id: %v | error: %s",
+			c.config.ID,
+			e)
+		return
+	}
 
 	for totalSent := 0; totalSent < len(bytes); {
 		sent, e := c.conn.Write(bytes[totalSent:])
