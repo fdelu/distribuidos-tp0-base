@@ -42,7 +42,7 @@ docker-compose-logs:
 	docker compose -f docker-compose-dev.yaml logs -f
 .PHONY: docker-compose-logs
 
-test_server:
+test_server: docker-image
 	docker compose --profile test_server -f docker-compose-dev.yaml up --build --attach=test_server
 	docker compose --profile test_server -f docker-compose-dev.yaml down
 .PHONY: run
