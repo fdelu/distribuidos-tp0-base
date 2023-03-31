@@ -188,6 +188,8 @@ También se modificó un poco el protocolo de comunicación. Ahora se envían JS
 
 Se agregaron dos nuevos mensajes: `get_winners` y `winners`. A continuación detalles sobre el protocolo final implementado:
 
+> Nota: este protocolo se actualizó en el ejercicio 8 para no usar el formato JSON. Ver sección final de este documento.
+
 * **Mensajes**: Se implementó una capa inferior que utiliza los sockets, que es capaz de enviar mensajes como strings. Esta capa agrega un header de 2 bytes delante del mensaje que indica el largo de este. 
   Entre el servidor y los clientes, se utiliza esa capa para enviar mensajes codificados como un JSON con dos atributos: `type` y `payload`. Hay 4 tipos de mensajes:
   - `submit`: El cliente envía este mensaje al servidor con una lista de apuestas a agregar. El payload de este mensaje es una lista de objetos de apuestas, cuyos atributos son la información de cada una de ellas: `agency`, `first_name`, `last_name`, `document`, `birthdate`, `number`.
@@ -196,7 +198,7 @@ Se agregaron dos nuevos mensajes: `get_winners` y `winners`. A continuación det
   - `winners`: Es la respuesta del servidor al mensaje anterior. El payload de este mensaje es una lista de strings, donde cada uno de esos strings es un DNI de una apuesta ganadora de la agencia a la que se le esta enviándo el mensaje.
 * **Diagrama**: En [este enlace](https://viewer.diagrams.net/index.html?tags=%7B%7D&highlight=0000ff&edit=_blank&layers=1&nav=1&title=ProtocoloDistribuidos#R7VlBc6IwGP01HrcDBFGOldbuobuzMxz22IkmhbSROCFU7a%2FfIEEgwdY6yJYZe%2BjASwLJ9977kg9HIFhtHzhcx78YwnTkWGg7Ancjx%2FHBVP7PgV0BjIFbABEnqIDsCgjJO1agpdCMIJw2OgrGqCDrJrhkSYKXooFBztmm2e2Z0eZb1zDCBhAuITXRvwSJuECnzqTCf2ISxeWbbc8vWlaw7KxWksYQsU0NAvcjEHDGRHG12gaY5rEr41KMmx9pPUyM40ScMsDKZo9hiGYOcMKXeZoEd6%2FpD6DmJnblgjGS61e3jIuYRSyB9L5CZ5xlCcL5Uy15V%2FV5ZGwtQVuCL1iInSITZoJJKBYrqlpxgm5zauTtkrM0LaA5oVQ901yaWm3KMr7EH6xH9csXURuoAvKA2QoLvpMdOKZQkLcmyVBpJTr0Owz9w4icimMpWTuuIrVUdUly%2BQgBeYSFGlWRIi9q06igPVVfoE1N%2BA3STC0hoEQGC0vwt0Fpk7BNTAQO13Afx400bZOcZ5aIkv8WjZVvxlzg7YchLkNlNUN18MOmZicFxTUnudZxUhrh%2FGrs3P8h%2BfMV7fSjaHeqKdruV9GOoegQ8zeCGP9ecnbdbybnsRE4U9%2B1fEthmpJlM0bNgD7LPBwwKgOfDwZLhBfThcRTwdkrrrVYlu9bH6brT0VbC9q4JWgl1nG2dnyNjMKEhrY%2FNQmw%2BjWJZ3CdZosVEQbjUsyiyTGkJEpyAeS7hCRwlkueyHPOrWpYEYSKXIdT8g4X%2B0fl7K7z1ezXN56Nxnf5s2R6S4tMZxvCSFiCNRWVkLRim3y6tigAGt0T06Jei9rApSw66dyieiQtKwgGYETDP%2Fqx6VQj6o4GOncXNuL0iBGfpHkyOlQ%2FKhV17kfbbc%2BaNdHZVp%2BGLM82103z9E0T6CeYszfNcb9etc2j5TX9Fkx4XaXfSc%2BUugalNzc3I8ejeZZdyJLBi%2FKrPTiUVNxpynU9zXOekXJBi9AuVqXY1zLl6xm3qzLF7blMsc065Zpxi3v9q8q5Gdft%2B4Nj9zXMqf6dz4H8GwDZBkf6Qeds%2F%2Br79KXJNssb%2BbqnDUkSzNPh7KhtIuq%2BuBk3uSq31Zrm%2FBbNXa628ftKvq1Onc8H4FTDYNOu0rK%2BZV%2F6q7lZyA7dpXsBde5SR3OpZ7p00o1L5W31m27Bc%2FXDOLj%2FBw%3D%3D) hay un pequeño diagrama con la secuencia de mensajes entre un cliente cualquiera y el servidor.
 
-## Parte 2
+## Parte 3
 
 ### Ejercicio 8
 
@@ -211,3 +213,11 @@ La arquitectura utilizada se asemeja bastante al modelo fork-join, ya que para a
 Como las tareas en la pool de procesos son casi independientes, los mecanismos de sincronización son casi nulos. Hay un lock global para el archivo de apuestas que se obtiene al ejecutar la función. `store_bets` desde cada proceso. Para el `load_bets` es innecesario ya que se lee solo del proceso principal.
 
 La única información que se envía entre los procesos es la que se envía inicialmente al crear la tarea en la pool o la que se retorna al finalizar, además de la almacenada con las funciones provistas.
+
+### Protocolo actualizado
+
+Se cambio el protocolo de comunicación para no utilizar más un JSON como mensaje. El nuevo protocolo es muy similar: siguen siendo mensajes en forma de string. Cada uno de los tipos de mensaje (los mismos que antes) tiene asignado un caracter que se envía al principio del mensaje. Los tipos y payloads son:
+* `SUBMIT` (`"S"`): el payload es una lista de apuestas. Cada apuesta tiene sus atributos separados por comas, y las distintas apuestas se separan con una nueva línea.
+* `GET_WINNERS` (`"G"`): no tiene payload.
+* `SUBMIT_RESULT` (`"R"`): el payload es un string (se espera un `OK`, que confirma la recepción de un batch de apuestas).
+*  `WINNERS` (`"W"`): el payload es una lista de DNIs. Es un string con un DNI por línea.
