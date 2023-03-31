@@ -8,35 +8,27 @@ STORAGE_FILEPATH = "./bets.csv"
 """ Simulated winner number in the lottery contest. """
 LOTTERY_WINNER_NUMBER = 7574
 
+SPLIT_CHAR = ","
+ATTRS_ORDER = ["agency", "first_name", "last_name", "document", "birthdate", "number"]
 
 """ A lottery bet registry. """
 class Bet:
-    def __init__(self, agency: str, first_name: str, last_name: str, document: str, birthdate: str, number: str):
+    def __init__(self, *args):
         """
         agency must be passed with integer format.
         birthdate must be passed with format: 'YYYY-MM-DD'.
         number must be passed with integer format.
         """
-        self.agency = int(agency)
-        self.first_name = first_name
-        self.last_name = last_name
-        self.document = document
-        self.birthdate = datetime.date.fromisoformat(birthdate)
-        self.number = int(number)
+        for i, attr in enumerate(ATTRS_ORDER):
+            value: str = str(args[i])
+            setattr(self, attr, value.replace(SPLIT_CHAR, ""))
 
-    def from_dict(data: dict):
-        return Bet(
-            data["agency"],
-            data["first_name"],
-            data["last_name"],
-            data["document"],
-            data["birthdate"],
-            data["number"],
-        )
-    
-    def to_dict(self):
-        return {x:str(y) for x, y in vars(self).items()}
+        self.agency = int(self.agency)
+        self.birthdate = datetime.date.fromisoformat(self.birthdate)
+        self.number = int(self.number)
 
+    def from_string(data: str):
+        return Bet(*data.split(SPLIT_CHAR))
 
 """ Checks whether a bet won the prize or not. """
 def has_won(bet: Bet) -> bool:

@@ -1,49 +1,67 @@
 package common
 
 import (
-	"encoding/json"
 	"log"
+	"strings"
 )
 
-type Message[T any] struct {
-	Type    string `json:"type"`
-	Payload T      `json:"payload"`
+type SubmitMessage struct{ Payload []Bet }
+type GetWinnersMessage struct{}
+type SubmitResultMessage struct{ Payload string }
+type WinnersMessage struct{ Payload []Dni }
+
+type MessageType = string
+
+const (
+	// Client messages
+	SUBMIT      MessageType = "S"
+	GET_WINNERS MessageType = "G"
+
+	// Server messages
+	SUBMIT_RESULT MessageType = "R"
+	WINNERS       MessageType = "W"
+
+	SPLIT_CHAR = "\n"
+)
+
+func NewSubmitMessage(bets []Bet) *SubmitMessage {
+	return &SubmitMessage{bets}
 }
 
-// Client messages
-const SUBMIT_TYPE = "submit"
-const GET_WINNERS_TYPE = "get_winners"
+func (m *SubmitMessage) ToString() string {
+	betsString := []string{}
+	for i := 0; i < len(m.Payload); i++ {
+		betsString = append(betsString, m.Payload[i].ToString())
+	}
+	return SUBMIT + strings.Join(betsString, SPLIT_CHAR)
+}
 
-func SubmitBetsMessage(bets []Bet) Message[[]Bet] {
-	return Message[[]Bet]{
-		Type:    SUBMIT_TYPE,
-		Payload: bets,
+func NewGetWinnersMessage() *GetWinnersMessage {
+	return &GetWinnersMessage{}
+}
+
+func (m *GetWinnersMessage) ToString() string {
+	return GET_WINNERS
+}
+
+func splitMessage(msg string, expectedType MessageType) string {
+	msgType := msg[0:1]
+	if msgType != expectedType {
+		log.Fatalf("Expected message of type %s from server but got type %s", expectedType, msgType)
+	}
+	return msg[1:]
+}
+
+func WinnersMessageFromString(msg string) *WinnersMessage {
+	dnis := splitMessage(msg, WINNERS)
+	return &WinnersMessage{
+		strings.Split(dnis, SPLIT_CHAR),
 	}
 }
 
-func GetWinnersMessage() Message[any] {
-	return Message[any]{
-		Type: GET_WINNERS_TYPE,
+func SubmitResultMessageFromString(msg string) *SubmitResultMessage {
+	result := splitMessage(msg, SUBMIT_RESULT)
+	return &SubmitResultMessage{
+		result,
 	}
-}
-
-// Server messages
-const SUBMIT_RESULT_TYPE = "submit_result"
-const WINNERS_TYPE = "winners"
-
-func parseMessage[T any](msg string, expectedType string) T {
-	result := &Message[T]{}
-	json.Unmarshal([]byte(msg), result)
-	if result.Type != expectedType {
-		log.Fatalf("Expected message of type %s from server but got type %s", expectedType, result.Type)
-	}
-	return result.Payload
-}
-
-func ParseWinnersMessage(msg string) []Dni {
-	return parseMessage[[]Dni](msg, WINNERS_TYPE)
-}
-
-func ParseResultMessage(msg string) string {
-	return parseMessage[string](msg, SUBMIT_RESULT_TYPE)
 }

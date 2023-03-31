@@ -2,7 +2,6 @@ package common
 
 import (
 	"encoding/csv"
-	"encoding/json"
 	"io"
 	"os"
 	"os/signal"
@@ -80,15 +79,15 @@ func (a *Agency) sendBets() {
 	total_sent := 0
 	result := "success"
 	for bets := a.readBatch(); len(bets) > 0; bets = a.readBatch() {
-		message, _ := json.Marshal(SubmitBetsMessage(bets))
+		message := NewSubmitMessage(bets).ToString()
 		a.client.Send(string(message))
 		response := a.client.Receive()
 		if response == "" {
 			result = "failed"
 			break
 		}
-		result := ParseResultMessage(response)
-		log.Debugf("action: submit_bets | result: %s | amount: %d", result, len(bets))
+		result := SubmitResultMessageFromString(response)
+		log.Debugf("action: submit_bets | result: %s | amount: %d", result.Payload, len(bets))
 		total_sent += len(bets)
 	}
 	log.Infof("action: completed_submit_bets | total_submitted: %d | result: %s | client_id: %v",
@@ -101,14 +100,14 @@ func (a *Agency) sendBets() {
 // Sends a request to the server to get the winner documents for this agency,
 // and logs the amount of winners.
 func (a *Agency) getWinners() {
-	message, _ := json.Marshal(GetWinnersMessage())
+	message := NewGetWinnersMessage().ToString()
 	a.client.Send(string(message))
 
 	response := a.client.Receive()
 	if response == "" {
 		return
 	}
-	winners := ParseWinnersMessage(response)
+	winners := WinnersMessageFromString(response).Payload
 	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %d", len(winners))
 }
 

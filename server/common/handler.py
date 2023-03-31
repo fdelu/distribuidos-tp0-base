@@ -6,7 +6,7 @@ from typing import Iterable
 
 from .utils import Bet, store_bets
 from .client import Client
-from .messages import Message
+from .messages import Message, MessageTypes
 
 bets_lock = Lock()
 
@@ -24,7 +24,7 @@ class ClientHandler:
             msgData = self.client.recv_message()
             if not msgData:
                 return None
-            msg = Message.from_json(msgData)
+            msg = Message.from_string(msgData)
             logging.debug(f'action: receive_message | result: success | ip: {self.addr[0]} | type: {msg.type}')
             return msg
         except OSError as e:
@@ -54,13 +54,13 @@ class ClientHandler:
                 logging.warn("action: received_bets | result: warn | no message received, client disconnected")
                 break
 
-            if msg.type == Message.SUBMIT_TYPE:
+            if msg.type == MessageTypes.SUBMIT:
                 self.store_bets(msg.payload)
                 logging.debug(f"action: received_bets | result: success | amount: {len(msg.payload)}")
-                self.client.send_message(Message(Message.SUBMIT_RESULT_TYPE, "OK").to_json())
+                self.client.send_message(Message(MessageTypes.SUBMIT_RESULT, "OK").to_string())
                 submitted_bets += len(msg.payload)
                 agency = msg.payload[0].agency
-            elif msg.type == Message.GET_WINNERS_TYPE:
+            elif msg.type == MessageTypes.GET_WINNERS:
                 break
             else:
                 raise Exception("Not implemented")
@@ -77,8 +77,8 @@ class ClientHandler:
         Returns the amount of winners for this agency.
         """
         this_agency_winners = [x.document for x in winners if x.agency == agency_number]
-        msg = Message(Message.WINNERS_TYPE, this_agency_winners)
-        self.client.send_message(msg.to_json())
+        msg = Message(MessageTypes.WINNERS, this_agency_winners)
+        self.client.send_message(msg.to_string())
         return len(this_agency_winners)
 
     def close(self):

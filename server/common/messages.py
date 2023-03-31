@@ -1,33 +1,41 @@
-import json
 import string
+from enum import Enum
 
 from .utils import Bet
 
-class Message:
+class MessageTypes(str, Enum):
     # Client messages
-    SUBMIT_TYPE = "submit" # Payload: [Bet]
-    GET_WINNERS_TYPE = "get_winners" # Payload: None
+    SUBMIT = "S" # Payload: [Bet]
+    GET_WINNERS = "G" # Payload: None
 
     # Server messages
-    SUBMIT_RESULT_TYPE = "submit_result" # Payload: str
-    WINNERS_TYPE = "winners" # Payload: [str]
+    SUBMIT_RESULT = "R" # Payload: str
+    WINNERS = "W" # Payload: [str]
 
-    def __init__(self, type: string, payload):
+
+SPLIT_CHAR = "\n"
+
+class Message:
+    def __init__(self, type: str, payload):
         self.type = type
         self.payload = payload
 
-    def from_json(data) -> "Message":
-        parsed = json.loads(data)
-        type = parsed["type"]
-        payload = parsed["payload"]
-        if type == Message.SUBMIT_TYPE:
-            bets = [Bet.from_dict(x) for x in payload]
+    def from_string(message_string: str) -> "Message":
+        type = MessageTypes(message_string[0])
+        rest = message_string[1:]
+        if type == MessageTypes.SUBMIT:
+            bets = [Bet.from_string(x) for x in rest.split(SPLIT_CHAR)]
             return Message(type, bets)
-        elif type == Message.GET_WINNERS_TYPE:
-            return Message(type, payload)
+        elif type == MessageTypes.GET_WINNERS:
+            return Message(type, rest)
         raise Exception("Unknown message type")
 
-    def to_json(self) -> string:
-        if self.type not in (self.SUBMIT_RESULT_TYPE, self.WINNERS_TYPE):
+    def to_string(self) -> string:
+        encoded = self.type
+        if self.type == MessageTypes.SUBMIT_RESULT:
+            encoded += self.payload
+        elif self.type == MessageTypes.WINNERS:
+            encoded += SPLIT_CHAR.join(self.payload)
+        else:
             raise Exception("Not implemented")
-        return json.dumps(vars(self))
+        return encoded
